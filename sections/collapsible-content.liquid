@@ -1,0 +1,904 @@
+{{ 'component-accordion.css' | asset_url | stylesheet_tag }}
+{{ 'collapsible-content.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+{%- endstyle -%}
+
+<div class="color-{{ section.settings.color_scheme }} gradient">
+  <div class="collapsible-content collapsible-{{ section.settings.layout }}-layout isolate{% if section.settings.layout == 'section' %} page-width{% elsif section.settings.layout == 'none' %} content-container content-container--full-width{% endif %}">
+    <div class="collapsible-content__wrapper section-{{ section.id }}-padding{% if section.settings.layout == 'section' %} content-container color-{{ section.settings.container_color_scheme }} gradient{% endif %}">
+      <div class="collapsible-content-wrapper">
+        <div class="collapsible-content__header" style="text-align: {{ section.settings.heading_alignment }};">
+          {%- if section.settings.caption != blank -%}
+            <p class="caption-with-letter-spacing">{{ section.settings.caption | escape }}</p>
+          {% endif %}
+          {%- if section.settings.heading != blank -%}
+            <h2 class="collapsible-content__heading {{ section.settings.heading_size }}">
+              {{ section.settings.heading | escape }}
+            </h2>
+          {%- else -%}
+            <h2 class="visually-hidden">{{ 'accessibility.collapsible_content_title' | t }}</h2>
+          {% endif %}
+        </div>
+        <div class="grid grid--1-col grid--2-col-tablet collapsible-content__grid{% if section.settings.desktop_layout == 'image_second' %} collapsible-content__grid--reverse{% endif %}">
+          {%- if section.settings.image != blank -%}
+            <div class="grid__item collapsible-content__grid-item">
+              <div
+                class="collapsible-content__media collapsible-content__media--{{ section.settings.image_ratio }} media global-media-settings gradient"
+                {% if section.settings.image_ratio == 'adapt' %}
+                  style="padding-bottom: {{ 1 | divided_by: section.settings.image.aspect_ratio | times: 100 }}%;"
+                {% endif %}
+              >
+                {%- capture sizes -%}(min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 100 | divided_by: 2 }}px, (min-width: 750px) calc((100vw - 130px) / 2), calc((100vw - 50px) / 2){%- endcapture -%}
+                {{
+                  section.settings.image
+                  | image_url: width: 1500
+                  | image_tag: loading: 'lazy', sizes: sizes, widths: '165, 360, 535, 750, 1070, 1250, 1500'
+                }}
+              </div>
+            </div>
+          {% endif %}
+          <!--  -->
+          <!-- Checking if has variant or not -->
+          {% assign hasVariantMetafieldValue = false %}
+          {% assign hasVariantMetafield = false %}
+          {% assign hasAllergensValue = false %}
+          {% unless product.has_only_default_variant %}
+            {% assign hasVariantMetafield = true %}
+          {% endunless %}
+
+          {% if hasVariantMetafield == true %}
+            {% for variant in product.variants %}
+              {% if variant.metafields.global.attributes_new.value != blank %}
+                {% assign hasVariantMetafieldValue = true %}
+                {% assign global_attibutes = variant.metafields.global.attributes_new.value | split: '|||' %}
+                {% for global_attibutes_ in global_attibutes %}
+                  {% assign global_attibutes_elements = global_attibutes_ | split: '==' %}
+                  {% assign global_attibutes_elements_first = global_attibutes_elements.first | downcase | strip %}
+                  {% case global_attibutes_elements_first %}
+                    {% when 'storage' %}
+                      {% capture storage_value %}{{ global_attibutes_elements.last }}{% endcapture %}
+                    {% when 'ingredients' %}
+                      {% capture ingredients_item_value %}{{ global_attibutes_elements.last }}{% endcapture %}
+                      {% capture ingredients_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span>{{ ingredients_item_value | replace: 'rn', '' }}{% endcapture %}
+                    {% when 'warning for allergens' %}
+                      {% capture Warning_for_allergens_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span><span>{{ global_attibutes_elements.last }}</span>{% endcapture %}
+                    {% when 'country of origin' %}
+                      {% capture country_of_origin_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span>{{ global_attibutes_elements.last }}{% endcapture %}
+                    {% when 'energy kj' %}
+                      {% capture energy_kj_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'energy kcal' %}
+                      {% capture energy_kcal_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'total fat' %}
+                      {% capture total_fat_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'of which saturates' %}
+                      {% capture of_which_saturates_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'carbohydrate' %}
+                      {% capture carbohydrate_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'of which sugars' %}
+                      {% capture of_which_sugars_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'protein' %}
+                      {% capture protein_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'salt' %}
+                      {% capture salt_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                    {% when 'cooking instructions' %}
+                      {% capture cooking_instructions_value %}<span>{{ global_attibutes_elements.last }}</span>{% endcapture %}
+                  {% endcase %}
+                {% endfor %}
+              {% endif %}
+
+              {% if variant.metafields.global.allergens.value != blank %}
+                {% assign hasAllergensValue = true %}
+                {% capture global_allergens_value %}
+                  {% assign global_allergens = product.metafields.global.allergens.value | replace: '|', ' | ' %}
+                    <span class="allergens">{{ global_allergens }}</span>
+                  {% endcapture %}
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+
+          {% if hasVariantMetafieldValue == false %}
+            {% if product.metafields.global.attributes.value != blank %}
+              {% assign global_attibutes = product.metafields.global.attributes.value | split: '|||' %}
+              {% for global_attibutes_ in global_attibutes %}
+                {% assign global_attibutes_elements = global_attibutes_ | split: '==' %}
+                {% assign global_attibutes_elements_first = global_attibutes_elements.first | downcase | strip %}
+                {% case global_attibutes_elements_first %}
+                  {% when 'storage' %}
+                    {% capture storage_value %}{{ global_attibutes_elements.last }}{% endcapture %}
+                  {% when 'ingredients' %}
+                    {% capture ingredients_item_value %}{{ global_attibutes_elements.last }}{% endcapture %}
+                    {% capture ingredients_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span>{{ ingredients_item_value }}{% endcapture %}
+                  {% when 'warning for allergens' %}
+                    {% capture Warning_for_allergens_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span><span>{{ global_attibutes_elements.last }}</span>{% endcapture %}
+                  {% when 'country of origin' %}
+                    {% capture country_of_origin_value %}<span class="bold-letter">{{  global_attibutes_elements.first }}</span>{{ global_attibutes_elements.last }}{% endcapture %}
+                  {% when 'energy kj' %}
+                    {% capture energy_kj_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'energy kcal' %}
+                    {% capture energy_kcal_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'total fat' %}
+                    {% capture total_fat_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'of which saturates' %}
+                    {% capture of_which_saturates_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'carbohydrate' %}
+                    {% capture carbohydrate_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'of which sugars' %}
+                    {% capture of_which_sugars_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'protein' %}
+                    {% capture protein_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'salt' %}
+                    {% capture salt_value %}<td class="bold-letter">{{  global_attibutes_elements.first }}</td><td>{{ global_attibutes_elements.last }}</td>{% endcapture %}
+                  {% when 'cooking instructions' %}
+                    {% capture cooking_instructions_value %}<span>{{ global_attibutes_elements.last }}</span>{% endcapture %}
+                {% endcase %}
+              {% endfor %}
+            {% endif %}
+
+            {% if product.metafields.global.allergens.value != blank %}
+              {% assign hasAllergensValue = true %}
+              {% capture global_allergens_value %}
+                    {% assign global_allergens = product.metafields.global.allergens.value | replace: '|', ' | ' %}
+                      <span class="allergens">{{ global_allergens }}</span>
+                    {% endcapture %}
+            {% endif %}
+          {% endif %}
+
+          <!--  -->
+
+          <div class="grid__item">
+            {%- for block in section.blocks -%}
+              {% assign has_storage = false %}
+              {% assign has_ingredients = false %}
+              {% assign has_cooking_instructions = false %}
+              {% assign is_allergens = false %}
+              {% assign block_heading = block.settings.heading | downcase | strip %}
+              {% if block_heading == 'storage' and storage_value != blank %}
+                {% assign has_storage = true %}
+              {% endif %}
+              {% if block_heading == 'ingredients & nutrition' and ingredients_value != blank %}
+                {% assign has_ingredients = true %}
+              {% endif %}
+              {% if block_heading == 'cooking instructions' and cooking_instructions_value != blank %}
+                {% assign has_cooking_instructions = true %}
+              {% endif %}
+              {% if block_heading == 'allergens' and hasAllergensValue == true %}
+                {% assign is_allergens = true %}
+              {% endif %}
+              {% if block.settings.row_content != blank
+                or block.settings.review_section == true
+                or block.settings.product_desciption == true
+                or has_storage == true
+                or has_ingredients == true
+                or has_cooking_instructions == true
+                or is_allergens == true
+              %}
+                <div
+                  class="accordion{% if section.settings.layout == 'row' %} content-container color-{{ section.settings.container_color_scheme }} gradient{% endif %}"
+                  {{ block.shopify_attributes }}
+                  {% if block.settings.review_section == true %}
+                    id="review-widget-section"
+                  {% elsif block.settings.product_desciption == true %}
+                    id="product-desc-accordion-section"
+                  {% elsif has_cooking_instructions == true %}
+                    id="cooking-instructions"
+                  {% endif %}
+                >
+                  <details
+                    id="Details-{{ block.id }}-{{ section.id }}"
+                    {% if section.settings.open_first_collapsible_row and forloop.first %}
+                      open
+                    {% endif %}
+                    {% if block.settings.review_section == true or block.settings.product_desciption == true %}
+                      open
+                    {% endif %}
+                  >
+                    <summary id="Summary-{{ block.id }}-{{ section.id }}">
+                      {% render 'icon-accordion', icon: block.settings.icon %}
+                      <h3 class="accordion__title h4">
+                        {{ block.settings.heading | default: block.settings.page.title }}
+                      </h3>
+                      {% render 'icon-caret' %}
+                    </summary>
+                    <div
+                      class="accordion__content rte"
+                      id="CollapsibleAccordion-{{ block.id }}-{{ section.id }}"
+                      role="region"
+                      aria-labelledby="Summary-{{ block.id }}-{{ section.id }}"
+                    >
+                      {% if block.settings.review_section == true %}
+                        <div id="review-widget" class="review-widget-container">
+                            {%- for block in section.blocks -%}
+                                {%- case block.type -%}
+                                  {%- when '@app' -%}
+                                  {% if block.id contains 'growave_loyalty' %}
+                                    {% render block %}
+                                    {% endif %}
+                          {% endcase %}
+                          {% endfor %}
+                        </div>
+                      {% elsif block.settings.product_desciption == true %}
+                        <div class="product-desc-tab">
+                          {{ product.description }}
+                        </div>
+
+                      {% else %}
+                        {% if has_storage == true %}
+                          {{ storage_value }}
+                        {% elsif has_cooking_instructions == true %}
+                          {{ cooking_instructions_value }}
+                        {% elsif has_ingredients == true %}
+                          {% if Warning_for_allergens_value != blank %}
+                            <div class="warning_for_allergens_value">
+                              {% capture bold_value %}<strong>bold</strong>{% endcapture %}
+                              {{ Warning_for_allergens_value | replace_last: 'bold', bold_value }}
+                            </div>
+                          {% endif %}
+                          <div class="ingredients_value">
+                            {%- if hasAllergensValue == true or section.settings.common_allergens -%}
+                              <!-- Adding common value of allergens from theme setting -->
+                              {%- if section.settings.common_allergens -%}
+                                {%- capture global_allergens_value -%}
+                                  {%- assign global_allergens = section.settings.common_allergens | replace: '|', ' | ' -%}
+                                    <span class="allergens">{{ global_allergens }}</span>
+                                {%- endcapture -%}
+                              {%- endif -%}
+                              {% comment %}
+                                {%- capture ingredients_value_in_allergnes -%}
+                                  {%- assign allergens_ = global_allergens_value | split:'|' -%}
+                                  {%- assign sentence = ingredients_item_value | strip_html -%}
+                                  {%- assign sentence_parts = sentence | split: " " -%}
+                                  {%- assign symbols = ". , ( ) : [ ] - " | split: " " -%}
+                                  {%- for part in sentence_parts -%}
+                                    {%- assign word = part | strip -%}
+                                    {%- for symbol in symbols -%}
+                                      {%- assign word = word | replace: symbol, "|||" -%}
+                                    {%- endfor -%}
+                                    {%- assign word__ = word | split: "|||" -%}
+                                    {%- assign word_size = word__ | size -%}
+                                    {%- if word_size > 1 -%}
+                                        {%- assign anyOneMatched = false -%}
+                                        {%- for word_ in word__ -%}
+                                        {%- assign split_word = word_ | downcase | strip -%}
+                                          {%- for allergen_ in allergens_ -%}
+                                            {%- assign strip_allergen = allergen_ | downcase | strip -%}
+                                         <div class="hidden">  <br> {{ strip_allergen }} --- {{ split_word }} <br> </div>
+                                            {%- if strip_allergen == split_word -%}
+                                               {% assign anyOneMatched = true %}
+                                                {%- capture bold_ -%}<strong>{{ word_ | strip}} </strong>{%- endcapture -%}
+                                                {{ part | replace:word_, bold_ | strip}}
+                                              {%- break -%}
+                                            {%- endif -%}
+                                          {%- endfor -%}
+                                        {%- endfor -%}
+                                        {%- if anyOneMatched == false -%}
+                                           {{ part | strip}}
+                                        {%- endif -%}
+
+                                      {%- else -%}
+
+                                       {%- assign split_word = word__.first | downcase | strip -%}
+                                        {%- assign matched = false -%}
+                                       {%- for allergen_ in allergens_ -%}
+                                          {%- assign strip_allergen = allergen_ | downcase | strip -%}
+                                          {%- if strip_allergen == split_word -%}
+                                            {%- assign matched = true -%}
+                                            {%- break -%}
+                                          {%- endif -%}
+                                        {%- endfor -%}
+
+                                        {%- if matched -%}
+                                            <strong>{{ part |strip}} </strong>
+                                        {%- else -%}
+                                          {{ part | strip}}
+                                        {%- endif -%}
+                                    {%- endif -%}
+
+                                  {%- endfor -%}
+                                {%- endcapture -%}
+                                <span class="bold-letter">Ingredients</span><span id="ingredients-with-allergens"> {{ ingredients_value_in_allergnes | replace: 'rn', '' | strip }} </span>
+                              {% endcomment %}
+                              {%- assign sentence = ingredients_item_value | strip_html -%}
+
+                              <span class="bold-letter">Ingredients</span><span id="ingredients-with-allergens"> </span>
+                              <script>
+                               document.addEventListener("DOMContentLoaded", () => {
+                                  const globalAllergens = `{{ section.settings.common_allergens }}`;
+                                  let sentence = `{{ sentence }}`;
+                                
+                                  // 1. Check if allergens and sentence are provided, return early if missing.
+                                  if (!globalAllergens || !sentence) {
+                                    console.warn("Missing allergens or sentence.");
+                                    return;
+                                  }
+                                
+                                  // 2. Normalize the allergens string by trimming spaces, handling multiple spaces, and removing empty values.
+                                  const allergenArray = globalAllergens
+                                    .split('|')
+                                    .map(item => item.trim().toLowerCase())  // Convert allergens to lowercase
+                                    .filter(Boolean);  // Remove empty strings
+                                  // 3. Iterate through each allergen and replace in the sentence.
+                                  allergenArray.forEach(allergen => {
+                                    // Escape special characters in allergens (e.g., parentheses, hyphens, etc.)
+                                    const escapedAllergen = allergen.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
+                                
+                                    // Regex to match allergens as whole words, case-insensitive, allowing for possible spaces around them
+                                    const allergenRegex = new RegExp(`\\b${escapedAllergen}\\b`, 'gi');
+                                    
+                                    // Replace allergens with the bolded version, ignoring case but preserving original case in the sentence
+                                    sentence = sentence.replace(allergenRegex, match => `<strong>${match.trim()}</strong>`);
+                                  });
+                                
+                                  // 4. Append the modified sentence to the div with id "ingredients-with-allergens"
+                                  const allergenDiv = document.getElementById('ingredients-with-allergens');
+                                  if (allergenDiv && allergenDiv.innerHTML !== sentence) {
+                                    allergenDiv.innerHTML = sentence;
+                                  }
+                                });
+
+                              </script>
+                            {%- else -%}
+                              {{ ingredients_value | replace: 'rn', '' }}
+                            {%- endif -%}
+                            {% comment %} {{ ingredients_value }} {% endcomment %}
+                          </div>
+                          {% if country_of_origin_value != blank %}
+                            <div class="country_of_origin_value">
+                              {{ country_of_origin_value }}
+                            </div>
+                          {% endif %}
+                          <div class="nutrition_value">
+                            <table>
+                              <tr>
+                                <th>Typical Nutritional Information</th>
+                                <th>Per 100g</th>
+                              </tr>
+                              {% if energy_kj_value != blank %}
+                                <tr>
+                                  {{ energy_kj_value }}
+                                </tr>
+                              {% endif %}
+                              {% if energy_kcal_value != blank %}
+                                <tr>
+                                  {{ energy_kcal_value }}
+                                </tr>
+                              {% endif %}
+                              {% if total_fat_value != blank %}
+                                <tr>
+                                  {{ total_fat_value }}
+                                </tr>
+                              {% endif %}
+                              {% if of_which_saturates_value != blank %}
+                                <tr>
+                                  {{ of_which_saturates_value }}
+                                </tr>
+                              {% endif %}
+                              {% if carbohydrate_value != blank %}
+                                <tr>
+                                  {{ carbohydrate_value }}
+                                </tr>
+                              {% endif %}
+                              {% if of_which_sugars_value != blank %}
+                                <tr>
+                                  {{ of_which_sugars_value }}
+                                </tr>
+                              {% endif %}
+                              {% if protein_value != blank %}
+                                <tr>
+                                  {{ protein_value }}
+                                </tr>
+                              {% endif %}
+                              {% if salt_value != blank %}
+                                <tr>
+                                  {{ salt_value }}
+                                </tr>
+                              {% endif %}
+                            </table>
+                          </div>
+                        {% elsif is_allergens == true %}
+                          <div class="allergens-container">
+                            <ul>
+                              {{ global_allergens_value }}
+                            </ul>
+                          </div>
+                        {% else %}
+                          {{ block.settings.row_content }}
+                          {{ block.settings.page.content }}
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  </details>
+                </div>
+              {% endif %}
+            {%- endfor -%}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'custom.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "t:sections.collapsible_content.name",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "caption",
+      "label": "t:sections.collapsible_content.settings.caption.label"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "t:sections.collapsible_content.settings.heading.label",
+      "default": "Collapsible content"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "label": "t:sections.collapsible_content.settings.heading_alignment.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.collapsible_content.settings.heading_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.collapsible_content.settings.heading_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.collapsible_content.settings.heading_alignment.options__3.label"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "t:sections.collapsible_content.settings.layout.label",
+      "options": [
+        {
+          "value": "none",
+          "label": "t:sections.collapsible_content.settings.layout.options__1.label"
+        },
+        {
+          "value": "row",
+          "label": "t:sections.collapsible_content.settings.layout.options__2.label"
+        },
+        {
+          "value": "section",
+          "label": "t:sections.collapsible_content.settings.layout.options__3.label"
+        }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "select",
+      "id": "color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        }
+      ],
+      "default": "background-1",
+      "label": "t:sections.all.colors.label"
+    },
+    {
+      "type": "select",
+      "id": "container_color_scheme",
+      "options": [
+        {
+          "value": "accent-1",
+          "label": "t:sections.all.colors.accent_1.label"
+        },
+        {
+          "value": "accent-2",
+          "label": "t:sections.all.colors.accent_2.label"
+        },
+        {
+          "value": "background-1",
+          "label": "t:sections.all.colors.background_1.label"
+        },
+        {
+          "value": "background-2",
+          "label": "t:sections.all.colors.background_2.label"
+        },
+        {
+          "value": "inverse",
+          "label": "t:sections.all.colors.inverse.label"
+        }
+      ],
+      "default": "background-2",
+      "label": "t:sections.collapsible_content.settings.container_color_scheme.label",
+      "info": "t:sections.collapsible_content.settings.container_color_scheme.info"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_first_collapsible_row",
+      "default": false,
+      "label": "t:sections.collapsible_content.settings.open_first_collapsible_row.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.collapsible_content.settings.header.content"
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:sections.collapsible_content.settings.image.label"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:sections.collapsible_content.settings.image_ratio.options__1.label"
+        },
+        {
+          "value": "small",
+          "label": "t:sections.collapsible_content.settings.image_ratio.options__2.label"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.collapsible_content.settings.image_ratio.options__3.label"
+        }
+      ],
+      "default": "adapt",
+      "label": "t:sections.collapsible_content.settings.image_ratio.label"
+    },
+    {
+      "type": "select",
+      "id": "desktop_layout",
+      "options": [
+        {
+          "value": "image_first",
+          "label": "t:sections.collapsible_content.settings.desktop_layout.options__1.label"
+        },
+        {
+          "value": "image_second",
+          "label": "t:sections.collapsible_content.settings.desktop_layout.options__2.label"
+        }
+      ],
+      "default": "image_second",
+      "label": "t:sections.collapsible_content.settings.desktop_layout.label",
+      "info": "t:sections.collapsible_content.settings.desktop_layout.info"
+    },
+    {
+      "type": "header",
+      "content": "Common Allergens Value for A Product"
+    },
+    {
+      "type": "textarea",
+      "id": "common_allergens",
+      "label": "Allergens",
+      "default": "Almond | Almonds | Almond Extract| Nibbed Almonds |Ground Almonds |Barley |Brazil Nuts|Butter|Cashew|Celery|CELERY|Celeriac|Crayfish|Cream|Crustaceans|Egg|Fish|(Fish)|(fish)|Hazelnuts|Kamult|Kamut|Lobster|Lupin|Macadamia Nuts|Metabisulphite|Milk|(Milk)|MILK|Molluscs|Mustard|MUSTARD|Oats|(Oats)|Peanuts|Caramelised Pecan Nuts: Pecan Nuts |Pistachios |Prawns |Queensland Nuts |Rye |Sesame Seeds |Sesame |Shrimp |Soya|(Soy)|Soy |SOYA |Soyabeans| Sodium Metabisulphate |Spelt |Sulphur Dioxide|(Sulphur Dioxide)|Sulphite|(Sulphites) | Walnuts |Wheat| WHEAT |Salmon |Trout |Mackerel |Caviar |Eel |Kippers",
+      "info": "The allergens are seperated by '|'"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ],
+  "blocks": [
+     {
+      "type": "@app"
+    },
+    {
+      "type": "collapsible_row",
+      "name": "t:sections.collapsible_content.blocks.collapsible_row.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "Collapsible row",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.heading.label",
+          "info": "t:sections.collapsible_content.blocks.collapsible_row.settings.heading.info"
+        },
+           {
+          "type": "checkbox",
+          "id": "review_section",
+          "label": "The collapsible row is for review section",
+           "default":false,
+           "info":"If the following box is checked, the review will be shown from the review app."
+        },
+          {
+          "type": "checkbox",
+          "id": "product_desciption",
+          "label": "The collapsible row is for Product Description",
+           "default":false,
+           "info":"Do not check the review section and product description section simultaneously, as the review section will be given first priority."
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.options__44.label"
+            }
+          ],
+          "default": "check_mark",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.icon.label"
+        },
+        {
+          "type": "richtext",
+          "id": "row_content",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.row_content.label",
+          "info":"Please ensure that the collapsible heading matches the title of the metafield when displaying content sourced from the metafield."
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.page.label"
+        }
+
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.collapsible_content.presets.name",
+      "blocks": [
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
