@@ -1,0 +1,116 @@
+{% comment %}
+  CUSTOM BREADCRUMB LOGIC
+  Renders a breadcrumb trail for products, prioritizing a
+  Parent > Child > Product structure.
+
+  Changelog:
+  - v12: Corrected all syntax errors by reverting from {% liquid %} tags
+         to standard {% ... %} tags, which are more robust. This will
+         allow the file to be saved and the debug notes to work correctly.
+  - v11: Re-introduced debug comments.
+  This was the original used prior to pivoting to an app due to time constraints
+{% endcomment %}
+
+<nav class="breadcrumbs" role="navigation" aria-label="breadcrumbs">
+  <a href="{{ routes.root_url }}" class="hover:underline">Home</a>
+
+  <!-- DEBUG-START -->
+  <!-- Product: {{ product.title }} -->
+  <!-- Product Collections: {%- for c in product.collections -%}{{ c.handle }}{% unless forloop.last %}, {% endunless %}{%- endfor -%} -->
+  <!-- Context Collection: {{ collection.handle | default: 'None' }} -->
+
+  {% assign menu_handles_to_check = 'food-hall, hampers-and-gifts' %}
+  {% assign parent_collection = nil %}
+  {% assign child_collection = nil %}
+  {% assign found_breadcrumb = false %}
+  {% assign product_collection_handles = product.collections | map: 'handle' %}
+  {% assign menu_handles_array = menu_handles_to_check | split: ',' %}
+
+  <!-- Menus to Check: {{ menu_handles_to_check }} -->
+
+  {% for menu_handle in menu_handles_array %}
+    {%- assign current_menu_handle = menu_handle | strip -%}
+    {%- assign primary_menu = linklists[current_menu_handle] -%}
+    <!-- Checking Menu: '{{ current_menu_handle }}'. Exists: {%- if primary_menu != blank -%}YES{%- else -%}NO{%- endif -%} -->
+    {% if primary_menu == blank %}
+      {% continue %}
+    {% endif %}
+
+    {% comment %} --- PRIORITY 1: Check user's current collection context first --- {% endcomment %}
+    {% if collection and collection.handle %}
+      {% for l1_link in primary_menu.links %}
+        {% for l2_link in l1_link.links %}
+          {% if l2_link.object and l2_link.object.handle == collection.handle %}
+            {%- assign parent_collection = l1_link.object -%}
+            {%- assign child_collection = l2_link.object -%}
+            {%- assign found_breadcrumb = true -%}
+            <!-- DEBUG: Found via Context. Parent: {{ parent_collection.title }}. Child: {{ child_collection.title }} -->
+            {% break %}
+          {% endif %}
+        {% endfor %}
+        {% if found_breadcrumb %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+
+    {% comment %} --- PRIORITY 2: If no context, search for the best path in this menu --- {% endcomment %}
+    {% unless found_breadcrumb %}
+      {% for l1_link in primary_menu.links %}
+        {% if l1_link.links.size > 0 and l1_link.object and product_collection_handles contains l1_link.object.handle %}
+          <!-- DEBUG: Found potential parent '{{ l1_link.title }}' ({{ l1_link.object.handle }}). Checking its children... -->
+          {% for l2_link in l1_link.links %}
+            {% if l2_link.object and product_collection_handles contains l2_link.object.handle %}
+              {%- assign parent_collection = l1_link.object -%}
+              {%- assign child_collection = l2_link.object -%}
+              {%- assign found_breadcrumb = true -%}
+              <!-- DEBUG: Found via Search. Parent: {{ parent_collection.title }}. Child: {{ child_collection.title }} -->
+              {% break %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        {% if found_breadcrumb %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+    {% endunless %}
+
+    {% if found_breadcrumb %}
+      {% break %}
+    {% endif %}
+  {% endfor %}
+
+  {% comment %} --- FINAL FALLBACK --- {% endcomment %}
+  {% unless found_breadcrumb %}
+    <!-- DEBUG: No hierarchy found. Using fallback. -->
+    {% if product.collections.size > 0 %}
+      {%- assign fallback_collection = collection | default: product.collections.first -%}
+      {% if fallback_collection.handle == 'all' and product.collections.size > 1 %}
+        {% for c in product.collections %}
+          {% if c.handle != 'all' %}
+            {%- assign fallback_collection = c -%}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+      {%- assign parent_collection = fallback_collection -%}
+    {% endif %}
+  {% endunless %}
+
+  <!-- Final Parent: {{ parent_collection.title | default: 'None' }} -->
+  <!-- Final Child: {{ child_collection.title | default: 'None' }} -->
+  <!-- DEBUG-END -->
+
+  {% if parent_collection %}
+    <span class="mx-1"> &gt; </span>
+    <a href="{{ parent_collection.url }}" class="hover:underline">{{ parent_collection.title }}</a>
+  {% endif %}
+
+  {% if child_collection %}
+    <span class="mx-1"> &gt; </span>
+    <a href="{{ child_collection.url }}" class="hover:underline">{{ child_collection.title }}</a>
+  {% endif %}
+
+  <span class="mx-1"> &gt; </span>
+  <span aria-current="page">{{ product.title }}</span>
+</nav>
