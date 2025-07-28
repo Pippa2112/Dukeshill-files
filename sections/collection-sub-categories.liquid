@@ -1,0 +1,167 @@
+/* This file exists within the theme Copy of Dukeshill 2.0 | PM Sandbox | Summer 2025 and is not present on the live website. 
+This initial approach was used for the sub-collection menu design/styling. 
+Mobile responsive has not been completed and has not passed QC. 
+Pivoted to app due to time constraints */
+
+{% capture linkItem %}
+  {% assign hasSubCategories = false %}
+  {% for link in section.settings.collection_sub_menu.links %}
+    {% if collection.url == link.url %}
+      {% if link.links != blank %}
+        {% assign hasSubCategories = true %}
+        {% for childLink in link.links %}
+          <li class="sub-category{% if collection.url == childLink.url %} current-page{% endif %}">
+            {%- comment -%}
+              Each link is now wrapped in a div to create the box effect.
+            {%- endcomment -%}
+            <div class="sub-category-box">
+              <a href="{{ childLink.url }}" role="button" tabindex="0" class="child-link">{{ childLink.title }}</a>
+            </div>
+          </li>
+        {% endfor %}
+        {% break %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endcapture %}
+
+{% if hasSubCategories == true %}
+  <div class="collection-sub-categories-section">
+    <div class="page-width">
+      <div class="scroll-wrapper">
+        <div class="scroll-container">
+          <ul class="sub-categories-ul scroll-list">
+            {{ linkItem }}
+          </ul>
+        </div>
+        <button class="scroll-button scroll-prev" aria-label="Scroll left">&#10094;</button>
+        <button class="scroll-button scroll-next" aria-label="Scroll right">&#10095;</button>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", (event) => {
+    const scrollContainer = document.querySelector('.collection-sub-categories-section .scroll-container');
+    const scrollNext = document.querySelector('.collection-sub-categories-section .scroll-next');
+    const scrollPrev = document.querySelector('.collection-sub-categories-section .scroll-prev');
+
+    if (scrollNext && scrollContainer) {
+      scrollNext.addEventListener('click', function() {
+        // Scrolls the container to the right by 150 pixels
+        scrollContainer.scrollBy({ left: 150, behavior: 'smooth' });
+      });
+    }
+
+    if (scrollPrev && scrollContainer) {
+      scrollPrev.addEventListener('click', function() {
+        // Scrolls the container to the left by 150 pixels
+        scrollContainer.scrollBy({ left: -150, behavior: 'smooth' });
+      });
+    }
+  });
+</script>
+
+{% schema %}
+{
+  "name": "Collection sub categories",
+  "settings": [
+    {
+      "type": "link_list",
+      "id": "collection_sub_menu",
+      "label": "t:sections.header.settings.menu.label"
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection sub categories"
+    }
+  ]
+}
+{% endschema %}
+
+{% stylesheet %}
+
+.collection-sub-categories-section {
+  margin-bottom: 2rem;
+}
+
+.collection-sub-categories-section .scroll-wrapper {
+  position: relative;
+}
+
+.collection-sub-categories-section .scroll-container {
+  display: flex;
+  overflow-x: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.collection-sub-categories-section .scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.collection-sub-categories-section .sub-categories-ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 1rem;
+}
+
+.collection-sub-categories-section .sub-category {
+  flex-shrink: 0;
+}
+
+.collection-sub-categories-section .sub-category-box {
+  border: 1px solid rgba(211, 211, 211, 0.55);
+  padding: 0 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 50px;
+  min-width: 120px;
+}
+  
+.collection-sub-categories-section .sub-categories-ul li a.child-link {
+  text-decoration: none;
+  color: inherit;
+  font-weight: bold;
+  text-align: center;
+  line-height: normal;
+  margin: 0;
+
+.collection-sub-categories-section .current-page .sub-category-box {
+  background-color: #ffffff;
+  border-color: #666666;
+}
+
+.collection-sub-categories-section .scroll-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.collection-sub-categories-section .scroll-prev {
+  left: -20px;
+}
+
+.collection-sub-categories-section .scroll-next {
+  right: -20px;
+}
+{% endstylesheet %}
